@@ -1,0 +1,23 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context="conex.facerecognition.RecognitionActivity">
+    <item
+        android:id="@+id/action_enrollUser"
+        android:orderInCategory="100"
+        android:title="@string/enrollUser" />
+    <item
+        android:id="@+id/action_deleteUser"
+        android:orderInCategory="101"
+        android:title="@string/deleteUser"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/action_chooseMethod"
+        android:orderInCategory="101"
+        android:title="@string/chooseMethod" />
+    <item
+        android:id="@+id/action_chooseCamera"
+        android:orderInCategory="101"
+        android:title="@string/chooseCamera"
+        app:showAsAction="never" />
+</menu>

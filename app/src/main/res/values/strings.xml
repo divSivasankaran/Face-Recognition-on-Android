@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">Theia</string>
+    <string name="action_settings">Settings</string>
+    <string name="enrollUser">Enroll</string>
+    <string name="deleteUser">Delete</string>
+    <string name="chooseMethod">Method</string>
+    <string name="chooseCamera">Camera</string>
+</resources>
