@@ -5,4 +5,5 @@
     <string name="deleteUser">Delete</string>
     <string name="chooseMethod">Method</string>
     <string name="chooseCamera">Camera</string>
+    <string name = "enroll_many_faces_error">I don\'t yet have the ability to read minds. To enroll, show me one face at a time :) </string>
 </resources>
