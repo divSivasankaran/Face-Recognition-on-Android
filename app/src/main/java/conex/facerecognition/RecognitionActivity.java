@@ -4,11 +4,18 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
 
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Environment;
+import android.support.v4.util.Pair;
+import android.support.v7.app.AlertDialog;
 import android.util.Log;
 import android.view.SurfaceView;
+import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.TextView;
 import android.support.design.widget.FloatingActionButton;
@@ -34,15 +41,21 @@ import org.opencv.core.MatOfRect;
 import org.opencv.core.Rect;
 import org.opencv.core.Scalar;
 import org.opencv.core.Size;
+import org.opencv.core.Point;
+
+import conex.facerecognition.util.ImageUtil;
 
 public class RecognitionActivity extends AppCompatActivity  implements CvCameraViewListener2{
 
     private CameraBridgeViewBase   mOpenCvCameraView;
     private int                    mCameraId           = 0;
-    private static final Scalar    FACE_RECT_COLOR     = new Scalar(0, 255, 0, 255);
+    private static final Scalar    FACE_RECT_COLOR     = new Scalar(190, 241, 243, 255);
     public  static final int       JAVA_DETECTOR       = 0;
     public  static final int       NATIVE_DETECTOR     = 1;
+    private static final double    FONT_SIZE           = 3;
+    private static final int       THICKNESS           = 3;
 
+    private Snackbar               mManyFacesErrorMsg;
     private Mat                    mRgba;
     private Mat                    mGray;
     private File                   mCascadeFile;
@@ -52,6 +65,13 @@ public class RecognitionActivity extends AppCompatActivity  implements CvCameraV
     private int                    mDetectorType       = JAVA_DETECTOR;
     private float                  mRelativeFaceSize   = 0.2f;
     private int                    mAbsoluteFaceSize   = 0;
+    private int                    mCount              = 0;
+    private String                 mUserLabel;
+    private List<Pair<Mat,String>> mTrain              = new ArrayList<>();
+    private List<Pair<Mat,String>> mTrainingSet        = new ArrayList<>();
+    private boolean                mTrainingInProgress = false;
+    private boolean                mEnrollUser         = false;
+    private AlertDialog            mEnrollDialog       = null;
     // Used to load the 'native-lib' library on application startup.
     static {
         System.loadLibrary("native-lib");
@@ -75,25 +95,50 @@ public class RecognitionActivity extends AppCompatActivity  implements CvCameraV
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        ImageButton fab = (ImageButton) findViewById(R.id.button_switch_camera);
-        fab.setOnClickListener(new View.OnClickListener() {
+        FloatingActionButton switch_cam = (FloatingActionButton) findViewById(R.id.button_switch_camera);
+        switch_cam.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                //Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                  //      .setAction("Action", null).show();
-                swapCamera();
+
+                RecognitionActivity.this.swapCamera();
+            }
+        });
+
+        FloatingActionButton enroll = (FloatingActionButton) findViewById(R.id.button_enroll);
+        enroll.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                RecognitionActivity.this.getUserLabel();
             }
         });
 
         mOpenCvCameraView = (CameraBridgeViewBase) findViewById(R.id.camera_preview_opencv);
         mOpenCvCameraView.setVisibility(SurfaceView.VISIBLE);
         mOpenCvCameraView.setCvCameraViewListener(this);
+
+        String ModelFile = Environment.getExternalStorageDirectory().getPath() + File.separator + getString(R.string.CVModelFileName);
+        GlobalClass global = (GlobalClass)getApplication();
+        global.getCVFaceRecognizer().setModelFile(ModelFile);
+
+        mManyFacesErrorMsg = Snackbar.make(findViewById(R.id.error_enroll_many_faces), getString(R.string.enroll_many_faces_error), Snackbar.LENGTH_LONG)
+                .setAction("Ok", new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        // Perform anything for the action selected
+                    }
+                })
+                .setActionTextColor(getResources().getColor(R.color.colorText));
+        View snackbarView = mManyFacesErrorMsg.getView();
+        snackbarView.setBackgroundColor(getResources().getColor(R.color.colorPrimary));
+
     }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_main, menu);
+        Toolbar mToolbar = (Toolbar) findViewById(R.id.toolbar);
+        mToolbar.setOverflowIcon(getResources().getDrawable(R.drawable.ic_overflowmenu));
         return true;
     }
 
@@ -105,13 +150,44 @@ public class RecognitionActivity extends AppCompatActivity  implements CvCameraV
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
-        if (id == R.id.action_enrollUser) {
-            Intent intent = new Intent(this, EnrollActivity.class);
-            startActivity(intent);
-            return true;
-        }
+//        if (id == R.id.action_enrollUser) {
+//
+//        }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    private void getUserLabel()
+    {
+        if(mEnrollDialog==null){
+            final EditText taskEditText = new EditText(this);
+            AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this)
+                    .setTitle("Who are we enrolling?")
+                    .setView(taskEditText)
+                    .setPositiveButton("Enroll", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            RecognitionActivity.this.mUserLabel = String.valueOf(taskEditText.getText());
+                            RecognitionActivity.this.mEnrollUser = true;
+                            RecognitionActivity.this.mCount = 0;
+                            RecognitionActivity.this.mTrainingSet.clear();
+
+                        }
+                    })
+                    .setNegativeButton("Cancel",  new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+
+                            RecognitionActivity.this.mEnrollUser = false;
+                            RecognitionActivity.this.mTrainingInProgress = false;
+                            RecognitionActivity.this.mTrainingSet.clear();
+                            RecognitionActivity.this.mTrain.clear();
+                        }
+                    });
+            mEnrollDialog = alertDialogBuilder.create();
+        }
+
+        mEnrollDialog.show();
     }
 
     BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
@@ -217,10 +293,50 @@ public class RecognitionActivity extends AppCompatActivity  implements CvCameraV
         }
 
         Rect[] facesArray = faces.toArray();
-        for (int i = 0; i < facesArray.length; i++)
+        for (int i = 0; i < facesArray.length; i++) {
             Core.rectangle(mRgba, facesArray[i].tl(), facesArray[i].br(), FACE_RECT_COLOR, 3);
+            if(!mEnrollUser && (mEnrollDialog==null || !mEnrollDialog.isShowing()))
+            {
+                GlobalClass global = (GlobalClass) getApplication();
+                String id = global.getCVFaceRecognizer().predict(ImageUtil.getCroppedFace(mRgba, facesArray[i]));
+                Point loc = facesArray[i].tl().clone();
+                loc.y = loc.y- 5;
+                Core.putText(mRgba, id, loc, Core.FONT_HERSHEY_PLAIN, FONT_SIZE, FACE_RECT_COLOR, THICKNESS);
+            }
+        }
 
-        return mRgba;
+        if(mEnrollUser && !mTrainingInProgress) {
+            if (facesArray.length > 1) {
+                mManyFacesErrorMsg.show();
+                //Restarting enrollment process
+                mTrain.clear();
+                mCount = 0;
+            } else if (facesArray.length == 1) {
+                if (mManyFacesErrorMsg.isShown())
+                    mManyFacesErrorMsg.dismiss();
+                //Adding the detected face to the training set
+
+                mCount++;
+                if (mCount % 2 == 0) {
+                    mTrain.add(new Pair(ImageUtil.getCroppedFace(mRgba, facesArray[0]), mUserLabel));
+                }
+                Core.putText(mRgba, String.valueOf(mCount / 2), facesArray[0].tl(), Core.FONT_HERSHEY_PLAIN, FONT_SIZE, FACE_RECT_COLOR, THICKNESS);
+                if (mCount == 20) {
+                    train();
+                }
+            }
+        }
+            return mRgba;
+    }
+
+    private void train()
+    {
+        mTrainingSet.addAll(mTrain);
+        mTrainingInProgress = true;
+        GlobalClass global = (GlobalClass)getApplication();
+        global.getCVFaceRecognizer().update(mTrainingSet);
+        mTrainingInProgress = false;
+        mEnrollUser = false;
     }
 
     private void swapCamera(){

@@ -4,38 +4,44 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="horizontal"
-    tools:context="conex.facerecognition.RecognitionActivity"
-    >
+    android:orientation="vertical"
+    tools:context="conex.facerecognition.RecognitionActivity">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
     <android.support.v7.widget.Toolbar
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
         android:background="?attr/colorPrimary"
+        android:layout_alignParentTop="true"
+        app:titleTextColor="@color/colorText"
+        app:popupTheme="@style/AppTheme.PopupOverlay"
+        android:actionOverflowButtonStyle="@style/ActionOverflow"
         />
+
     <android.support.design.widget.AppBarLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-          >
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent">
 
     </android.support.design.widget.AppBarLayout>
 
     <include
         android:id="@+id/include"
+        android:layout_height="wrap_content"
+        android:layout_width="wrap_content"
+        android:layout_below="@+id/toolbar"
         layout="@layout/content_main" />
 
-    <ImageButton
-        android:id="@+id/button_switch_camera"
+    <EditText
+        android:id="@+id/error_enroll_many_faces"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="center_vertical|center_horizontal"
-        app:layout_anchor="@+id/include"
-        app:layout_anchorGravity="bottom|right"
-        app:srcCompat="@drawable/ic_switch_camera" />
+        android:ems="10"
+        android:inputType="none|textMultiLine"
+        android:visibility="invisible" />
 
-    <VideoView
-        android:id="@+id/videoView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
-
+    </RelativeLayout>
 </android.support.design.widget.CoordinatorLayout>

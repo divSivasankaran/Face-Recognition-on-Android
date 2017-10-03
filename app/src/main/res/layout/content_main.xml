@@ -1,20 +1,42 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<android.support.design.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:opencv="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
     app:layout_behavior="@string/appbar_scrolling_view_behavior"
     tools:context="conex.facerecognition.RecognitionActivity"
     tools:showIn="@layout/activity_main">
 
+
     <org.opencv.android.JavaCameraView
-        android:id="@+id/camera_preview_opencv"
+    android:id="@+id/camera_preview_opencv"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:visibility="gone"
+    opencv:camera_id="any" />
+
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/button_switch_camera"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:visibility="gone"
-        opencv:camera_id="any"
-        opencv:show_fps="true" />
+        android:clickable="true"
+        app:fabSize="normal"
+        android:background="@drawable/circle"
+        android:layout_gravity="bottom|left"
+        app:elevation="6dp"
+        app:srcCompat="@drawable/ic_switch_camera" />
 
-</android.support.constraint.ConstraintLayout>
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/button_enroll"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:clickable="true"
+        app:fabSize="normal"
+        android:background="@drawable/circle"
+        android:layout_gravity="bottom|right|end"
+        app:elevation="6dp"
+        app:srcCompat="@drawable/ic_enroll" />
+
+</android.support.design.widget.CoordinatorLayout>

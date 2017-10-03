@@ -3,8 +3,8 @@ package conex.facerecognition;
 import android.support.v4.util.Pair;
 
 import org.opencv.core.Mat;
-import org.opencv.core.MatOfRect;
 
+import java.io.File;
 import java.util.List;
 
 /**
@@ -14,34 +14,41 @@ import java.util.List;
 public class CVFaceRecognizer {
     public CVFaceRecognizer(){
         mNativeObj = nativeCreateObject();
-    }
-    public void start() {
-        nativeStart(mNativeObj);
+        mModelFile = null;
     }
 
-    public void stop() {
-        nativeStop(mNativeObj);
+    public void load(String modelFile)
+    {
+        mModelFile = modelFile;
+        nativeLoad(mNativeObj,mModelFile);
     }
 
-    public boolean train(List<Pair<Mat,Integer>> trainingSet) {
+    public void load()
+    {
+        nativeLoad(mNativeObj,mModelFile);
+    }
+
+    public void save() {
+        nativeSave(mNativeObj, mModelFile);
+    }
+
+    public boolean train(List<Pair<Mat,String>> trainingSet) {
         long[] images = new long[trainingSet.size()];
-        int[] labels = new int [trainingSet.size()];
+        String[] labels = new String [trainingSet.size()];
         for(int i = 0; i < trainingSet.size(); i++)
         {
-            Pair<Mat,Integer> training_point = trainingSet.get(i);
+            Pair<Mat,String> training_point = trainingSet.get(i);
             images[i] = training_point.first.getNativeObjAddr();
-            labels[i] = training_point.second.intValue();
+            labels[i] = training_point.second;
         }
-        nativeTrain(mNativeObj,images,labels);
+        nativeTrain(mNativeObj,images,labels,mModelFile);
         return true;
     }
 
-    public int predict(Mat img) {
-
-        int result = -1;
+    public String predict(Mat img){
+        String result = "";
         try {
-
-            result = nativePredict(mNativeObj, img.getNativeObjAddr());
+            result = nativePredict(mNativeObj, img.getNativeObjAddr(), mThreshold);
         } catch(Exception e){
         }
 
@@ -53,11 +60,46 @@ public class CVFaceRecognizer {
         mNativeObj = 0;
     }
 
+    public boolean update(List<Pair<Mat,String>> trainingSet) {
+        long[] images = new long[trainingSet.size()];
+        String[] labels = new String [trainingSet.size()];
+        for(int i = 0; i < trainingSet.size(); i++)
+        {
+            Pair<Mat,String> training_point = trainingSet.get(i);
+            images[i] = training_point.first.getNativeObjAddr();
+            labels[i] = training_point.second;
+        }
+        nativeUpdate(mNativeObj,images,labels, mModelFile);
+        return true;
+    }
+
+    public void setModelFile(String filename)
+    {
+        mModelFile = filename;
+        File f = new File(mModelFile);
+        if(f.exists())
+        {
+            load();
+        }
+    }
+    public void clearModelfile(String filename)
+    {
+        File f = new File(mModelFile);
+        if(f.exists())
+        {
+            f.delete();
+        }
+    }
+
+
+    private String mModelFile;
     private long mNativeObj = 0;
+    private long mThreshold = 70;
     private static native long nativeCreateObject();
     private static native void nativeDestroyObject(long thiz);
-    private static native void nativeStart(long thiz);
-    private static native void nativeStop(long thiz);
-    private static native boolean nativeTrain(long thiz, long[] images, int[] labels);
-    private static native int nativePredict(long thiz, long image);
+    private static native void nativeLoad(long thiz, String filename);
+    private static native void nativeSave(long thiz, String filename);
+    private static native boolean nativeTrain(long thiz, long[] images, String[] labels, String filename);
+    private static native String nativePredict(long thiz, long image, long threshold);
+    private static native boolean nativeUpdate(long thiz, long[] images, String[] labels, String filename);
 }

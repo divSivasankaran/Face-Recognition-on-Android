@@ -77,13 +77,17 @@ JNIEXPORT void JNICALL Java_conex_facerecognition_CVFaceRecognizer_nativeDestroy
     LOGD("Java_conex_facerecognition_CVFaceRecognizer_nativeDestroyObject exit");
 }
 
-JNIEXPORT void JNICALL Java_conex_facerecognition_CVFaceRecognizer_nativeStart
-(JNIEnv * jenv, jclass, jlong thiz)
+JNIEXPORT void JNICALL Java_conex_facerecognition_CVFaceRecognizer_nativeSave
+(JNIEnv * jenv, jclass, jlong thiz, jstring filename)
 {
-    LOGD("Java_conex_facerecognition_CVFaceRecognizer_nativeStart enter");
+    LOGD("Java_conex_facerecognition_CVFaceRecognizer_nativeSave enter");
     try
     {
-        //((DetectionBasedTracker*)thiz)->run();
+        const char* jnamestr = jenv->GetStringUTFChars(filename, NULL);
+        string c_filename(jnamestr);
+        FaceRecognizer* model = ((FaceRecognizer*)(thiz));
+        string name = model->info()->name();
+        model->save(c_filename);
     }
     catch(cv::Exception& e)
     {
@@ -95,20 +99,24 @@ JNIEXPORT void JNICALL Java_conex_facerecognition_CVFaceRecognizer_nativeStart
     }
     catch (...)
     {
-        LOGD("nativeStart caught unknown exception");
+        LOGD("nativeSave caught unknown exception");
         jclass je = jenv->FindClass("java/lang/Exception");
-        jenv->ThrowNew(je, "Unknown exception in JNI code of CVFaceRecognizer.nativeStart()");
+        jenv->ThrowNew(je, "Unknown exception in JNI code of CVFaceRecognizer.nativeSave()");
     }
-    LOGD("Java_conex_facerecognition_CVFaceRecognizer_nativeStart exit");
+    LOGD("Java_conex_facerecognition_CVFaceRecognizer_nativeSave exit");
 }
 
-JNIEXPORT void JNICALL Java_conex_facerecognition_CVFaceRecognizer_nativeStop
-(JNIEnv * jenv, jclass, jlong thiz)
+JNIEXPORT void JNICALL Java_conex_facerecognition_CVFaceRecognizer_nativeLoad
+(JNIEnv * jenv, jclass, jlong thiz, jstring filename)
 {
-    LOGD("Java_conex_facerecognition_CVFaceRecognizer_nativeStop enter");
+    LOGD("Java_conex_facerecognition_CVFaceRecognizer_nativeLoad enter");
     try
     {
-        //((DetectionBasedTracker*)thiz)->stop();
+        const char* jnamestr = jenv->GetStringUTFChars(filename, NULL);
+        string c_filename(jnamestr);
+        FaceRecognizer* model = ((FaceRecognizer*)(thiz));
+        string name = model->info()->name();
+        model->load(c_filename);
     }
     catch(cv::Exception& e)
     {
@@ -122,32 +130,54 @@ JNIEXPORT void JNICALL Java_conex_facerecognition_CVFaceRecognizer_nativeStop
     {
         LOGD("nativeStop caught unknown exception");
         jclass je = jenv->FindClass("java/lang/Exception");
-        jenv->ThrowNew(je, "Unknown exception in JNI code of CVFaceRecognizer.nativeStop()");
+        jenv->ThrowNew(je, "Unknown exception in JNI code of CVFaceRecognizer.nativeLoad()");
     }
-    LOGD("Java_conex_facerecognition_CVFaceRecognizer_nativeStop exit");
+    LOGD("Java_conex_facerecognition_CVFaceRecognizer_nativeLoad exit");
 }
 
 
 JNIEXPORT jboolean JNICALL Java_conex_facerecognition_CVFaceRecognizer_nativeTrain
-(JNIEnv * jenv, jclass, jlong thiz, jlongArray images, jintArray labels)
+(JNIEnv * jenv, jclass, jlong thiz, jlongArray images, jobjectArray labels, jstring filename)
 {
     bool final = false;
     LOGD("Java_conex_facerecognition_CVFaceRecognizer__nativeTrain enter");
     try {
+        //Train clears all the existing information anyway.
+        // So we re-create the label info based on the current training set
         size_t objCount = (size_t) (jenv->GetArrayLength(images));
         vector<Mat> c_images;
-        vector<int> c_labels;
+        map<int,string> c_labels;
+        map<string,int> r_labels;
+        vector<int> c_ids;
         for (int i = 0; i < (int) objCount; i++)
         {
-            int label = (int)(jenv->GetIntArrayElements(labels,false)[i]);
-            c_labels.push_back(label);
+            jstring jlabel = (jstring)(jenv->GetObjectArrayElement(labels,i));
+            const char* jnamestr = jenv->GetStringUTFChars(jlabel, NULL);
+            string label(jnamestr);
+            //assign an id to the label if it doesn't exist.
+            int id = -1;
+            if(r_labels.find(label)==r_labels.end())
+            {
+                id = r_labels.size();
+                r_labels[label] = id;
+                c_labels[id]= label;
+            }
+            else{
+                id = r_labels[label];
+            }
+
+            c_ids.push_back(id);
             Mat jImage = *((Mat*) (jenv->GetLongArrayElements(images,false)[i]));
             c_images.push_back(jImage);
         }
+        const char* jnamestr = jenv->GetStringUTFChars(filename, NULL);
+        string c_filename(jnamestr);
+
         FaceRecognizer* model = ((FaceRecognizer*)(thiz));
         string name = model->info()->name();
-        model->train(c_images,c_labels);
-
+        model->train(c_images,c_ids);
+        model->setLabelsInfo(c_labels);
+        model->save(c_filename);
         final = true;
     }
     catch(cv::Exception& e)
@@ -168,16 +198,25 @@ JNIEXPORT jboolean JNICALL Java_conex_facerecognition_CVFaceRecognizer_nativeTra
     return (jboolean)final;
 }
 
-JNIEXPORT jint JNICALL Java_conex_facerecognition_CVFaceRecognizer_nativePredict
-        (JNIEnv * jenv, jclass, jlong thiz, jlong image)
+JNIEXPORT jstring JNICALL Java_conex_facerecognition_CVFaceRecognizer_nativePredict
+        (JNIEnv * jenv, jclass, jlong thiz, jlong image, jlong threshold)
 {
-    int result = -1;
+    string result = "nan";
     LOGD("Java_conex_facerecognition_CVFaceRecognizer__nativeTrain enter");
     try {
         Mat jImage = *((Mat*) (image));
         FaceRecognizer* model = ((FaceRecognizer*)(thiz));
         string name = model->info()->name();
-        result = model->predict(jImage);
+        int id = -1;
+        double confidence = 0.0;
+        long c_threshold = (long) (threshold);
+        model->predict(jImage, id, confidence);
+        if(confidence < threshold)
+        {
+            result.clear();
+            result = model->getLabelInfo(id);
+        }
+
     }
     catch(cv::Exception& e)
     {
@@ -194,5 +233,73 @@ JNIEXPORT jint JNICALL Java_conex_facerecognition_CVFaceRecognizer_nativePredict
         jenv->ThrowNew(je, "Unknown exception in JNI code CVFaceRecognizer.nativeTrain()");
     }
     LOGD("Java_conex_facerecognition_CVFaceRecognizer_nativeTrain exit");
-    return (jint)result;
+    return jenv->NewStringUTF(result.c_str());
+}
+
+JNIEXPORT jboolean JNICALL Java_conex_facerecognition_CVFaceRecognizer_nativeUpdate
+        (JNIEnv * jenv, jclass, jlong thiz, jlongArray images, jobjectArray labels, jstring filename)
+{
+    bool final = false;
+    LOGD("Java_conex_facerecognition_CVFaceRecognizer__nativeUpdate enter");
+    try {
+        //Upate just adds to the  existing model.
+        // So we have to maintain the label info from the original model
+        map<int,string> c_labels;
+        map<string,int> r_labels;
+        FaceRecognizer* model = ((FaceRecognizer*)(thiz));
+        vector<int> id_list = model->getLabelsByString("");
+        for(int i=0; i<id_list.size(); i++)
+        {
+            string s = model->getLabelInfo(id_list[i]);
+            r_labels[s] = id_list[i];
+            c_labels[i] = s;
+        }
+
+        size_t objCount = (size_t) (jenv->GetArrayLength(images));
+        vector<Mat> c_images;
+        vector<int> c_ids;
+        for (int i = 0; i < (int) objCount; i++)
+        {
+            jstring jlabel = (jstring)(jenv->GetObjectArrayElement(labels,i));
+            const char* jnamestr = jenv->GetStringUTFChars(jlabel, NULL);
+            string label(jnamestr);
+            //assign an id to the label if it doesn't exist.
+            int id = -1;
+            if(r_labels.find(label)==r_labels.end())
+            {
+                id = r_labels.size();
+                r_labels[label] = id;
+                c_labels[id]= label;
+            }
+            else{
+                id = r_labels[label];
+            }
+            c_ids.push_back(id);
+            Mat jImage = *((Mat*) (jenv->GetLongArrayElements(images,false)[i]));
+            c_images.push_back(jImage);
+        }
+        const char* jnamestr = jenv->GetStringUTFChars(filename, NULL);
+        string c_filename(jnamestr);
+        string name = model->info()->name();
+        model->update(c_images,c_ids);
+        model->setLabelsInfo(c_labels);
+        model->save(c_filename);
+        final = true;
+    }
+    catch(cv::Exception& e)
+    {
+        LOGD("nativeTrain caught cv::Exception: %s", e.what());
+        jclass je = jenv->FindClass("org/opencv/core/CvException");
+        if(!je)
+            je = jenv->FindClass("java/lang/Exception");
+        jenv->ThrowNew(je, e.what());
+    }
+    catch (...)
+    {
+        LOGD("nativeUpdate caught unknown exception");
+        jclass je = jenv->FindClass("java/lang/Exception");
+        jenv->ThrowNew(je, "Unknown exception in JNI code CVFaceRecognizer.nativeUpdate()");
+    }
+    LOGD("Java_conex_facerecognition_CVFaceRecognizer_nativeUpdate exit");
+    return (jboolean)final;
 }

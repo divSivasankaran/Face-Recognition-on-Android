@@ -24,19 +24,19 @@ JNIEXPORT void JNICALL Java_conex_facerecognition_CVFaceRecognizer_nativeDestroy
 
 /*
  * Class:     conex_facerecognition_CVFaceRecognizer
- * Method:    nativeStart
+ * Method:    nativeSave
  * Signature: (J)V
  */
-JNIEXPORT void JNICALL Java_conex_facerecognition_CVFaceRecognizer_nativeStart
-  (JNIEnv *, jclass, jlong);
+JNIEXPORT void JNICALL Java_conex_facerecognition_CVFaceRecognizer_nativeSave
+  (JNIEnv *, jclass, jlong, jstring);
 
 /*
  * Class:     conex_facerecognition_CVFaceRecognizer
- * Method:    nativeStop
+ * Method:    nativeLoad
  * Signature: (J)V
  */
-JNIEXPORT void JNICALL Java_conex_facerecognition_CVFaceRecognizer_nativeStop
-  (JNIEnv *, jclass, jlong);
+JNIEXPORT void JNICALL Java_conex_facerecognition_CVFaceRecognizer_nativeLoad
+  (JNIEnv *, jclass, jlong, jstring);
 
 
 /*
@@ -45,15 +45,25 @@ JNIEXPORT void JNICALL Java_conex_facerecognition_CVFaceRecognizer_nativeStop
  * Signature: (JJJ)V
  */
 JNIEXPORT jboolean JNICALL Java_conex_facerecognition_CVFaceRecognizer_nativeTrain
-  (JNIEnv *, jclass, jlong, jlongArray , jintArray);
+  (JNIEnv *, jclass, jlong, jlongArray , jobjectArray, jstring);
 
 /*
  * Class:     conex_facerecognition_CVFaceRecognizer
  * Method:    nativePredict
  * Signature: (JJJ)V
  */
-JNIEXPORT jint JNICALL Java_conex_facerecognition_CVFaceRecognizer_nativePredict
-        (JNIEnv *, jclass, jlong, jlong);
+JNIEXPORT jstring JNICALL Java_conex_facerecognition_CVFaceRecognizer_nativePredict
+        (JNIEnv *, jclass, jlong, jlong, jlong);
+
+
+/*
+ * Class:     conex_facerecognition_CVFaceRecognizer
+ * Method:    nativeUpdate
+ * Signature: (JJJ)V
+ */
+JNIEXPORT jboolean JNICALL Java_conex_facerecognition_CVFaceRecognizer_nativeUpdate
+        (JNIEnv *, jclass, jlong, jlongArray, jobjectArray, jstring);
+
 
 #ifdef __cplusplus
 }
