@@ -16,8 +16,13 @@ public class ImageUtil {
         Mat croppedimage = img.submat(rect);
         Mat resizedimage = new Mat();
         Imgproc.resize(croppedimage, resizedimage, mFaceSize);
+        Mat mGray = getGrayScale(resizedimage);
+        return mGray;
+    }
+    public static Mat getGrayScale(Mat img)
+    {
         Mat mGray = new Mat();
-        Imgproc.cvtColor(resizedimage,mGray,Imgproc.COLOR_RGB2GRAY);
+        Imgproc.cvtColor(img,mGray,Imgproc.COLOR_RGB2GRAY);
         return mGray;
     }
 }

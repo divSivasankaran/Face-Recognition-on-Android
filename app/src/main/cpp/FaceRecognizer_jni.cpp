@@ -201,7 +201,7 @@ JNIEXPORT jboolean JNICALL Java_conex_facerecognition_CVFaceRecognizer_nativeTra
 JNIEXPORT jstring JNICALL Java_conex_facerecognition_CVFaceRecognizer_nativePredict
         (JNIEnv * jenv, jclass, jlong thiz, jlong image, jlong threshold)
 {
-    string result = "nan";
+    string result = "unknown";
     LOGD("Java_conex_facerecognition_CVFaceRecognizer__nativeTrain enter");
     try {
         Mat jImage = *((Mat*) (image));

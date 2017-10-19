@@ -49,11 +49,12 @@ public class RecognitionActivity extends AppCompatActivity  implements CvCameraV
 
     private CameraBridgeViewBase   mOpenCvCameraView;
     private int                    mCameraId           = 0;
-    private static final Scalar    FACE_RECT_COLOR     = new Scalar(190, 241, 243, 255);
+    private static final Scalar    FACE_RECT_COLOR     = new Scalar(190, 241, 243, 255);//new Scalar(190, 241, 243, 255);
+    private static final Scalar    FACE_TEXT_COLOR     = new Scalar(190, 241, 243, 255);
     public  static final int       JAVA_DETECTOR       = 0;
     public  static final int       NATIVE_DETECTOR     = 1;
     private static final double    FONT_SIZE           = 3;
-    private static final int       THICKNESS           = 3;
+    private static final int       THICKNESS           = 10;
 
     private Snackbar               mManyFacesErrorMsg;
     private Mat                    mRgba;
@@ -62,7 +63,7 @@ public class RecognitionActivity extends AppCompatActivity  implements CvCameraV
     private CascadeClassifier      mJavaDetector;
 
     private FaceTracker            mNativeDetector;
-    private int                    mDetectorType       = JAVA_DETECTOR;
+    private int                    mDetectorType       = NATIVE_DETECTOR;
     private float                  mRelativeFaceSize   = 0.2f;
     private int                    mAbsoluteFaceSize   = 0;
     private int                    mCount              = 0;
@@ -293,38 +294,35 @@ public class RecognitionActivity extends AppCompatActivity  implements CvCameraV
         }
 
         Rect[] facesArray = faces.toArray();
+        double maxArea  = 0;
+        int maxId = 0;
         for (int i = 0; i < facesArray.length; i++) {
             Core.rectangle(mRgba, facesArray[i].tl(), facesArray[i].br(), FACE_RECT_COLOR, 3);
-            if(!mEnrollUser && (mEnrollDialog==null || !mEnrollDialog.isShowing()))
+            if(facesArray[i].area()>maxArea)
+            {
+                maxArea = facesArray[i].area();
+                maxId = i;
+            }
+            if(!mTrainingInProgress && !mEnrollUser && (mEnrollDialog==null || !mEnrollDialog.isShowing()))
             {
                 GlobalClass global = (GlobalClass) getApplication();
                 String id = global.getCVFaceRecognizer().predict(ImageUtil.getCroppedFace(mRgba, facesArray[i]));
                 Point loc = facesArray[i].tl().clone();
                 loc.y = loc.y- 5;
-                Core.putText(mRgba, id, loc, Core.FONT_HERSHEY_PLAIN, FONT_SIZE, FACE_RECT_COLOR, THICKNESS);
+                Core.putText(mRgba, id, loc, Core.FONT_HERSHEY_PLAIN, FONT_SIZE, FACE_TEXT_COLOR, THICKNESS);
             }
         }
 
         if(mEnrollUser && !mTrainingInProgress) {
-            if (facesArray.length > 1) {
-                mManyFacesErrorMsg.show();
-                //Restarting enrollment process
-                mTrain.clear();
-                mCount = 0;
-            } else if (facesArray.length == 1) {
-                if (mManyFacesErrorMsg.isShown())
-                    mManyFacesErrorMsg.dismiss();
-                //Adding the detected face to the training set
 
-                mCount++;
-                if (mCount % 2 == 0) {
-                    mTrain.add(new Pair(ImageUtil.getCroppedFace(mRgba, facesArray[0]), mUserLabel));
-                }
-                Core.putText(mRgba, String.valueOf(mCount / 2), facesArray[0].tl(), Core.FONT_HERSHEY_PLAIN, FONT_SIZE, FACE_RECT_COLOR, THICKNESS);
-                if (mCount == 20) {
-                    train();
-                }
+            if (mManyFacesErrorMsg.isShown())
+                mManyFacesErrorMsg.dismiss();
+            //Adding the detected face to the training set
+            mTrainingInProgress = true;
+            for(mCount = 0; mCount<20; mCount++) {
+                mTrain.add(new Pair(ImageUtil.getCroppedFace(mRgba, facesArray[maxId]), mUserLabel));
             }
+            train();
         }
             return mRgba;
     }

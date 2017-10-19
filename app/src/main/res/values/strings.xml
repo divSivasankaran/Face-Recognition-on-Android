@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Theia</string>
+    <string name="app_name">Eagle Nest</string>
     <string name="action_settings">Settings</string>
     <string name="enrollUser">Enroll</string>
     <string name="deleteUser">Delete</string>
