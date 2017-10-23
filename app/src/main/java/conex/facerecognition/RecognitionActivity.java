@@ -51,10 +51,11 @@ public class RecognitionActivity extends AppCompatActivity  implements CvCameraV
     private int                    mCameraId           = 0;
     private static final Scalar    FACE_RECT_COLOR     = new Scalar(190, 241, 243, 255);//new Scalar(190, 241, 243, 255);
     private static final Scalar    FACE_TEXT_COLOR     = new Scalar(190, 241, 243, 255);
+    private static final Scalar    FACE_TEXT_BACKGROUND  = new Scalar(0, 0, 0, 255);
     public  static final int       JAVA_DETECTOR       = 0;
     public  static final int       NATIVE_DETECTOR     = 1;
     private static final double    FONT_SIZE           = 3;
-    private static final int       THICKNESS           = 10;
+    private static final int       THICKNESS           = 4;
 
     private Snackbar               mManyFacesErrorMsg;
     private Mat                    mRgba;
@@ -309,7 +310,8 @@ public class RecognitionActivity extends AppCompatActivity  implements CvCameraV
                 String id = global.getCVFaceRecognizer().predict(ImageUtil.getCroppedFace(mRgba, facesArray[i]));
                 Point loc = facesArray[i].tl().clone();
                 loc.y = loc.y- 5;
-                Core.putText(mRgba, id, loc, Core.FONT_HERSHEY_PLAIN, FONT_SIZE, FACE_TEXT_COLOR, THICKNESS);
+                setLabel(mRgba, id, loc);
+                //Core.putText(mRgba, id, loc, Core.FONT_HERSHEY_PLAIN, FONT_SIZE, FACE_TEXT_COLOR, THICKNESS);
             }
         }
 
@@ -327,6 +329,15 @@ public class RecognitionActivity extends AppCompatActivity  implements CvCameraV
             return mRgba;
     }
 
+    private void setLabel(Mat img, String label, Point pt )
+    {
+        Size text = Core.getTextSize(label, Core.FONT_HERSHEY_PLAIN, FONT_SIZE, THICKNESS, null);
+        Point dst =  new Point(0,0);
+        dst.x = pt.x + text.width;
+        dst.y = pt.y -  text.height;
+        Core.rectangle(img, pt, dst, FACE_TEXT_BACKGROUND,-1);
+        Core.putText(img, label, pt, Core.FONT_HERSHEY_PLAIN, FONT_SIZE, FACE_TEXT_COLOR, THICKNESS);
+    }
     private void train()
     {
         mTrainingSet.addAll(mTrain);
