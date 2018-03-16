@@ -4,6 +4,7 @@ This is an android app that can use an inbuilt camera/video stream via Wifi/Wifi
 
 For face recognition on the devices, the following libraries have been used/integrated:
  
- [OpenCV FaceRecognition](https://docs.opencv.org/2.4/modules/contrib/doc/facerec/facerec_tutorial.html#face-recognition-with-opencv)
- [Facenet on Tensorflow](https://github.com/davidsandberg/facenet)
+ * [OpenCV FaceRecognition](https://docs.opencv.org/2.4/modules/contrib/doc/facerec/facerec_tutorial.html#face-recognition-with-opencv)
+ 
+ * [Facenet on Tensorflow](https://github.com/davidsandberg/facenet)
 
