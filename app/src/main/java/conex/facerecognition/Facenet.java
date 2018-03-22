@@ -6,16 +6,12 @@ package conex.facerecognition;
 
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.support.v4.util.ArrayMap;
 import android.support.v4.util.Pair;
-import android.util.Log;
 
 import org.opencv.android.Utils;
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfFloat;
-import org.opencv.core.Scalar;
 import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
 import org.tensorflow.contrib.android.TensorFlowInferenceInterface;
@@ -24,17 +20,11 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
-import conex.facerecognition.util.MatofFloatConverter;
-import conex.facerecognition.util.User;
-import conex.facerecognition.util.UserDatabase;
 
 public class Facenet extends FaceRecognizer {
     private TensorFlowInferenceInterface inferenceInterface;

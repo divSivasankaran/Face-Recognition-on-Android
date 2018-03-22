@@ -4,7 +4,6 @@ import android.support.v4.util.Pair;
 
 import org.opencv.core.Mat;
 
-import java.io.File;
 import java.util.List;
 
 /**
