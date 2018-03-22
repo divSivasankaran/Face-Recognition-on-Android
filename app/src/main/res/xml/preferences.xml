@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    android:title="@string/action_settings">
+
+    <ListPreference
+        android:key="pref_frMethod"
+        android:title="@string/pref_method_title"
+        android:entries="@array/pref_method_types"
+        android:entryValues="@array/pref_method_values"
+        android:defaultValue="@string/pref_frMethod_default" />
+</PreferenceScreen>
+    <!--android:dialogTitle="@string/pref_method_title"-->

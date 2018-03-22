@@ -7,10 +7,15 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
+import android.Manifest;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.provider.Settings;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v4.util.Pair;
 import android.support.v7.app.AlertDialog;
 import android.util.Log;
@@ -74,6 +79,7 @@ public class RecognitionActivity extends AppCompatActivity  implements CvCameraV
     private boolean                mTrainingInProgress = false;
     private boolean                mEnrollUser         = false;
     private AlertDialog            mEnrollDialog       = null;
+
     // Used to load the 'native-lib' library on application startup.
     static {
         System.loadLibrary("native-lib");
@@ -113,14 +119,17 @@ public class RecognitionActivity extends AppCompatActivity  implements CvCameraV
                 RecognitionActivity.this.getUserLabel();
             }
         });
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(new String[]{Manifest.permission.CAMERA}, 1);
+            }
+        }
 
+        Log.i("DEBUG", "on create STARTED successfully");
         mOpenCvCameraView = (CameraBridgeViewBase) findViewById(R.id.camera_preview_opencv);
         mOpenCvCameraView.setVisibility(SurfaceView.VISIBLE);
         mOpenCvCameraView.setCvCameraViewListener(this);
-
-        String ModelFile = Environment.getExternalStorageDirectory().getPath() + File.separator + getString(R.string.CVModelFileName);
         GlobalClass global = (GlobalClass)getApplication();
-        global.getCVFaceRecognizer().setModelFile(ModelFile);
 
         mManyFacesErrorMsg = Snackbar.make(findViewById(R.id.error_enroll_many_faces), getString(R.string.enroll_many_faces_error), Snackbar.LENGTH_LONG)
                 .setAction("Ok", new View.OnClickListener() {
@@ -130,9 +139,12 @@ public class RecognitionActivity extends AppCompatActivity  implements CvCameraV
                     }
                 })
                 .setActionTextColor(getResources().getColor(R.color.colorText));
+
+
         View snackbarView = mManyFacesErrorMsg.getView();
         snackbarView.setBackgroundColor(getResources().getColor(R.color.colorPrimary));
 
+        Log.i("DEBUG", "on create loaded successfully");
     }
 
     @Override
@@ -152,9 +164,13 @@ public class RecognitionActivity extends AppCompatActivity  implements CvCameraV
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
-//        if (id == R.id.action_enrollUser) {
-//
-//        }
+        if (id == R.id.action_enrollUser) {
+            getUserLabel();
+        }
+        else if(id == R.id.action_settings){
+            Intent intent = new Intent(this, SettingsActivity.class);
+            startActivity(intent);
+        }
 
         return super.onOptionsItemSelected(item);
     }
@@ -307,11 +323,10 @@ public class RecognitionActivity extends AppCompatActivity  implements CvCameraV
             if(!mTrainingInProgress && !mEnrollUser && (mEnrollDialog==null || !mEnrollDialog.isShowing()))
             {
                 GlobalClass global = (GlobalClass) getApplication();
-                String id = global.getCVFaceRecognizer().predict(ImageUtil.getCroppedFace(mRgba, facesArray[i]));
+                String id = global.getFaceRecognizer().predict(ImageUtil.getCroppedFace(mRgba, facesArray[i]));
                 Point loc = facesArray[i].tl().clone();
-                loc.y = loc.y- 5;
+                loc.y = loc.y - 5;
                 setLabel(mRgba, id, loc);
-                //Core.putText(mRgba, id, loc, Core.FONT_HERSHEY_PLAIN, FONT_SIZE, FACE_TEXT_COLOR, THICKNESS);
             }
         }
 
@@ -343,7 +358,7 @@ public class RecognitionActivity extends AppCompatActivity  implements CvCameraV
         mTrainingSet.addAll(mTrain);
         mTrainingInProgress = true;
         GlobalClass global = (GlobalClass)getApplication();
-        global.getCVFaceRecognizer().update(mTrainingSet);
+        global.getFaceRecognizer().update(mTrainingSet);
         mTrainingInProgress = false;
         mEnrollUser = false;
     }

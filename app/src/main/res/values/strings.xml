@@ -1,11 +1,24 @@
 <resources>
-    <string name="app_name">Face Recognition</string>
+    <string name="app_name">FaceRecognition</string>
     <string name="action_settings">Settings</string>
     <string name="enrollUser">Enroll</string>
     <string name="deleteUser">Delete</string>
-    <string name="chooseMethod">Method</string>
-    <string name="chooseCamera">Camera</string>
+    <string name="pref_method_title">Face Recognition Method</string>
     <string name="enroll_many_faces_error">I don\'t yet have the ability to read minds. To enroll, show me one face at a time :) </string>
     <string name="CVModelFileName">CVFaceRecognizer.xml</string>
     <string name="facenetModel">"file:///android_asset/facenet_inception.pb"</string>
+    <string name = "pref_frMethod_default">facenet</string>
+
+    <string-array name = "pref_method_types">
+        <item>Open CV LHBP</item>
+        <item>Tensorflow Facenet</item>
+    </string-array>
+    <string-array name = "pref_method_values">
+        <item>opencv</item>
+        <item>facenet</item>
+    </string-array>
 </resources>
+
+
+
+

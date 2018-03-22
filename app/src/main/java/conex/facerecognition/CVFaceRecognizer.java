@@ -11,16 +11,10 @@ import java.util.List;
  * Created by div_1 on 26/9/2017.
  */
 
-public class CVFaceRecognizer {
+public class CVFaceRecognizer extends FaceRecognizer {
     public CVFaceRecognizer(){
         mNativeObj = nativeCreateObject();
         mModelFile = null;
-    }
-
-    public void load(String modelFile)
-    {
-        mModelFile = modelFile;
-        nativeLoad(mNativeObj,mModelFile);
     }
 
     public void load()
@@ -73,26 +67,7 @@ public class CVFaceRecognizer {
         return true;
     }
 
-    public void setModelFile(String filename)
-    {
-        mModelFile = filename;
-        File f = new File(mModelFile);
-        if(f.exists())
-        {
-            load();
-        }
-    }
-    public void clearModelfile(String filename)
-    {
-        File f = new File(mModelFile);
-        if(f.exists())
-        {
-            f.delete();
-        }
-    }
 
-
-    private String mModelFile;
     private long mNativeObj = 0;
     private long mThreshold = 70;
     private static native long nativeCreateObject();
