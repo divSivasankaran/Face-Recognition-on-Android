@@ -7,4 +7,8 @@ For face recognition on the devices, the following libraries have been used/inte
  * [OpenCV FaceRecognition](https://docs.opencv.org/2.4/modules/contrib/doc/facerec/facerec_tutorial.html#face-recognition-with-opencv)
  
  * [Facenet on Tensorflow](https://github.com/davidsandberg/facenet)
+ 
+#### Contact
+If you are trying to adapt it for your own use case/facing issues with deploying or wish to share your comments/feedback, reach me at <div1090@gmail.com>
 
+#### [MIT License](LICENSE)
