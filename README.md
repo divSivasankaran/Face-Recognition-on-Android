@@ -7,7 +7,13 @@ For face recognition on the devices, the following libraries have been used/inte
  * [OpenCV FaceRecognition](https://docs.opencv.org/2.4/modules/contrib/doc/facerec/facerec_tutorial.html#face-recognition-with-opencv)
  
  * [Facenet on Tensorflow](https://github.com/davidsandberg/facenet)
- 
+
+## Instructions
+
+The pre-trained facenet weights file can be found [here](https://drive.google.com/file/d/1pp0DGJTLvc93zdr3V80FJ7J5EvOLApE6/view). Add the weights file to the assets folder for the facenet method to work.
+
+Note: The facenet model is not currently optimized for mobile and so the performance is less than ideal right now. I'm working on moving to Tensorflow Lite & will publish a new model soon!
+
 #### Contact
 If you are trying to adapt it for your own use case/facing issues with deploying or wish to share your comments/feedback, reach me at <div1090@gmail.com>
 
