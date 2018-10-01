@@ -10,7 +10,7 @@ For face recognition on the devices, the following libraries have been used/inte
 
 ## Try it
 
-Download the apk file from [here](https://drive.google.com/file/d/1aZJWEWSA338QVq7AK4pHRWkwVnz-e9Kr/view?usp=sharing).
+Download the apk file from [here](https://drive.google.com/open?id=1wZIlJuSOf8ZBC93nQdwiwzVRaIp73ULt).
 
 *Note:* You will have to allow installation from unknown sources option to install the app. I personally don't see any value is putting it out as a stand-alone app on playstore, as it is not a complete solution. Let me know if you think otherwise, and I'll consider putting it up.
 
