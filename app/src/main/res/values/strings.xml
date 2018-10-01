@@ -7,7 +7,7 @@
     <string name="enroll_many_faces_error">I don\'t yet have the ability to read minds. To enroll, show me one face at a time :) </string>
     <string name="CVModelFileName">CVFaceRecognizer.xml</string>
     <string name="facenetModel">"file:///android_asset/facenet_inception.pb"</string>
-    <string name = "pref_frMethod_default">facenet</string>
+    <string name = "pref_frMethod_default">opencv</string>
 
     <string-array name = "pref_method_types">
         <item>Open CV LHBP</item>

@@ -3,9 +3,16 @@ package conex.facerecognition;
 import android.app.Application;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
+import android.support.v4.util.Pair;
 import android.widget.Toast;
 
+import org.opencv.android.Utils;
+import org.opencv.core.Mat;
+import org.opencv.highgui.Highgui;
+
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by div_1 on 27/9/2017.
@@ -28,12 +35,25 @@ public class GlobalClass extends Application {
             if(method.equals("opencv")) {
                 this.mFaceRecognizer = new CVFaceRecognizer();
                 String ModelFile = getFilesDir() + File.separator + getString(R.string.CVModelFileName);
-                this.mFaceRecognizer.setModelFile(ModelFile);
+                if(this.mFaceRecognizer.setModelFile(ModelFile)==false) {
+                    try {
+                        Mat barackimg = Utils.loadResource(getApplicationContext(), R.drawable.barack, Highgui.IMREAD_GRAYSCALE);
+                        List<Pair<Mat, String>> mTrain = new ArrayList<>();
+                        mTrain.add(new Pair<>(barackimg, "Barack"));
+                        this.mFaceRecognizer.train(mTrain);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
             }
             else if (method.equals("facenet"))
             {
-                this.mFaceRecognizer = new Facenet(getApplicationContext());
-                //TODO: Load the db/trained model file with user data into modelFile
+                File model = new File(getString(R.string.facenetModel));
+                if(model.exists())
+                {
+                    this.mFaceRecognizer = new Facenet(getApplicationContext());
+                    //TODO: Load the db/trained model file with user data into modelFile
+                }
             }
         }
         return this.mFaceRecognizer;
