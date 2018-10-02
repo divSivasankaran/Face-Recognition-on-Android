@@ -8,7 +8,7 @@ For face recognition on the devices, the following libraries have been used/inte
 
  * [Facenet on Tensorflow](https://github.com/davidsandberg/facenet)
 
-## Try it
+## [Try it](https://drive.google.com/open?id=1wZIlJuSOf8ZBC93nQdwiwzVRaIp73ULt)
 
 Download the apk file from [here](https://drive.google.com/open?id=1wZIlJuSOf8ZBC93nQdwiwzVRaIp73ULt).
 
@@ -34,9 +34,9 @@ Versions & Reqs to duplicate build:
 
 Follow these instructions if you do not have OpenCV set up in your local machine.
 * Download [here](http://sourceforge.net/projects/opencvlibrary/files/opencv-android/2.4.11/OpenCV-2.4.11-android-sdk.zip/download)
-* Instructions to setup can be found [here](https://docs.opencv.org/2.4/doc/tutorials/introduction/android_binary_package/O4A_SDK.html)
-Update these variables in your local machine to reflect the path to your OpenCV Directory in CMakeLists.txt
-`OpenCV_Dir`
+* Instructions [here](https://docs.opencv.org/2.4/doc/tutorials/introduction/android_binary_package/O4A_SDK.html)
+
+Update `OpenCV_Dir` to reflect the path to your OpenCV Directory in CMakeLists.txt
 
 Verify if these files exist in the project. If not, follow the instructions below to add them.
 
@@ -44,12 +44,13 @@ Verify if these files exist in the project. If not, follow the instructions belo
 * `Face-Recognition-on-Android\app\src\main\res\raw\haarcascade_frontalface_default.xml`
 * `Face-Recognition-on-Android\app\src\main\res\raw\lbpcascade_frontalface.xml`
 
-### Pre-trained weights and other files
-The pre-trained facenet weights file - `facenet_inception.pb` can be found [here](https://drive.google.com/file/d/1pp0DGJTLvc93zdr3V80FJ7J5EvOLApE6/view). Add the weights file to the assets folder for the facenet method to work.
+**Model files**
 
-OpenCV Face Tracker requires the cascade files, which are already part of this repository. If you want to test with their other defaults, you can find them [here](https://github.com/opencv/opencv/tree/master/data).
+* The pre-trained weights file can be found [here](https://drive.google.com/file/d/1pp0DGJTLvc93zdr3V80FJ7J5EvOLApE6/view). Add the weights file to the assets folder for the facenet method to work.
 
-Note: The facenet model is not currently optimized for mobile and so the performance is less than ideal right now. I'm working on moving to Tensorflow Lite & will publish a new model soon!
+* OpenCV Face Tracker requires the cascade files, which are already part of this repository. If you want to test with their other defaults, you can find them [here](https://github.com/opencv/opencv/tree/master/data).
+
+*Note:* The facenet model is not currently optimized for mobile and so the performance is less than ideal right now. I'm working on moving to Tensorflow Lite & will publish a new model soon!
 
 #### Contact
 If you are trying to adapt it for your own use case/facing issues with deploying or wish to share your comments/feedback, reach me at <div1090@gmail.com>
