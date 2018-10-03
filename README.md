@@ -1,6 +1,8 @@
 ## Project Theia - Face Recognition on Android
 
-This is an android app that can use an inbuilt camera/video stream via Wifi/Wifi-Direct to recognize people from a pre-enrolled list of persons using Face Recognition. The goal is to be able to run the algorithms locally on the device without accessing API/servers running on the cloud & utilize only a single photo per enrollment. To make it clear, the purpose was to just demonstrate and quickly integrate existing open-source Face APIs as a starter kit for further work.
+This is an android app that can use an inbuilt camera/video stream via Wifi/Wifi-Direct to recognize people from a pre-enrolled list of persons using Face Recognition. The goal is to be able to run the algorithms locally on the device without accessing API/servers running on the cloud & utilize only a single photo per enrollment. 
+
+**Please bear in mind that the purpose was to just demonstrate and quickly integrate existing open-source Face APIs as a starter kit for further work. This is by no means an out-of-the-box solution for FR, nor is it a production ready app.**
 
 For face recognition on the devices, the following libraries have been used/integrated:
 
