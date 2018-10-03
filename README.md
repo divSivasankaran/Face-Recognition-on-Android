@@ -4,6 +4,10 @@ This is an android app that can use an inbuilt camera/video stream via Wifi/Wifi
 
 **Please bear in mind that the purpose was to just demonstrate and quickly integrate existing open-source Face APIs as a starter kit for further work. This is by no means an out-of-the-box solution for FR, nor is it a production ready app.**
 
+As they often say in CS circles: *there's no free lunch*. 
+
+This is useful for anyone who (like me) has struggled to get existing open-source face recognition stuff to work on multiple android platforms & show basic POCs with subject enrollment, recognition etc.
+
 For face recognition on the devices, the following libraries have been used/integrated:
 
  * [OpenCV FaceRecognition](https://docs.opencv.org/2.4/modules/contrib/doc/facerec/facerec_tutorial.html#face-recognition-with-opencv)
