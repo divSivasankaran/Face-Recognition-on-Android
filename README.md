@@ -12,6 +12,8 @@ For face recognition on the devices, the following libraries have been used/inte
 
 Download the apk file from [here](https://drive.google.com/open?id=1wZIlJuSOf8ZBC93nQdwiwzVRaIp73ULt).
 
+This apk file should work for the architectures mentioned below with Android versions >= Marshmellow (API 23+). *This is the minimum requirement for facenet.*
+
 *Note:* You will have to allow installation from unknown sources option to install the app. I personally don't see any value is putting it out as a stand-alone app on playstore, as it is not a complete solution. Let me know if you think otherwise, and I'll consider putting it up.
 
 ## Supported architectures:
