@@ -31,6 +31,7 @@ import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.CameraBridgeViewBase.CvCameraViewFrame;
 import org.opencv.android.CameraBridgeViewBase.CvCameraViewListener2;
 import org.opencv.android.LoaderCallbackInterface;
+import org.opencv.imgproc.Imgproc;
 import org.opencv.objdetect.CascadeClassifier;
 import org.opencv.android.OpenCVLoader;
 import org.opencv.android.CameraBridgeViewBase;
@@ -76,7 +77,14 @@ public class RecognitionActivity extends AppCompatActivity  implements CvCameraV
 
     // Used to load the 'native-lib' library on application startup.
     static {
-        System.loadLibrary("native-lib");
+        try{
+            System.loadLibrary("native-lib");
+
+        }catch (Exception e)
+        {
+            e.printStackTrace();
+            Log.e("ERROR", "Loading native library fails" + e);
+        }
     }
 
     static {
@@ -89,7 +97,6 @@ public class RecognitionActivity extends AppCompatActivity  implements CvCameraV
      * which is packaged with this application.
      */
 
-    public native String stringFromJNI();
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -254,8 +261,15 @@ public class RecognitionActivity extends AppCompatActivity  implements CvCameraV
     @Override
     public void onResume() {
         super.onResume();
-        OpenCVLoader.initAsync( OpenCVLoader.OPENCV_VERSION_2_4_8,
-                this, mLoaderCallback );
+        if (!OpenCVLoader.initDebug()) {
+
+            OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_3_4_0, this, mLoaderCallback);
+        } else {
+
+            mLoaderCallback.onManagerConnected(LoaderCallbackInterface.SUCCESS);
+        }
+//        OpenCVLoader.initAsync( OpenCVLoader.OPENCV_VERSION_2_4_8,
+//                this, mLoaderCallback );
     }
     @Override
     public void onPause()
@@ -308,7 +322,7 @@ public class RecognitionActivity extends AppCompatActivity  implements CvCameraV
         double maxArea  = 0;
         int maxId = 0;
         for (int i = 0; i < facesArray.length; i++) {
-            Core.rectangle(mRgba, facesArray[i].tl(), facesArray[i].br(), FACE_RECT_COLOR, 3);
+            Imgproc.rectangle(mRgba, facesArray[i].tl(), facesArray[i].br(), FACE_RECT_COLOR, 3);
             if(facesArray[i].area()>maxArea)
             {
                 maxArea = facesArray[i].area();
@@ -324,7 +338,7 @@ public class RecognitionActivity extends AppCompatActivity  implements CvCameraV
             }
         }
 
-        if(mEnrollUser && !mTrainingInProgress) {
+        if(facesArray.length!=0 && mEnrollUser && !mTrainingInProgress) {
 
             if (mManyFacesErrorMsg.isShown())
                 mManyFacesErrorMsg.dismiss();
@@ -340,12 +354,12 @@ public class RecognitionActivity extends AppCompatActivity  implements CvCameraV
 
     private void setLabel(Mat img, String label, Point pt )
     {
-        Size text = Core.getTextSize(label, Core.FONT_HERSHEY_PLAIN, FONT_SIZE, THICKNESS, null);
+        Size text = Imgproc.getTextSize(label, Core.FONT_HERSHEY_PLAIN, FONT_SIZE, THICKNESS, null);
         Point dst =  new Point(0,0);
         dst.x = pt.x + text.width;
         dst.y = pt.y -  text.height;
-        Core.rectangle(img, pt, dst, FACE_TEXT_BACKGROUND,-1);
-        Core.putText(img, label, pt, Core.FONT_HERSHEY_PLAIN, FONT_SIZE, FACE_TEXT_COLOR, THICKNESS);
+        Imgproc.rectangle(img, pt, dst, FACE_TEXT_BACKGROUND,-1);
+        Imgproc.putText(img, label, pt, Core.FONT_HERSHEY_PLAIN, FONT_SIZE, FACE_TEXT_COLOR, THICKNESS);
     }
     private void train()
     {
