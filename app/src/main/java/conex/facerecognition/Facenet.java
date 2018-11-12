@@ -5,22 +5,16 @@ package conex.facerecognition;
  */
 
 import android.content.Context;
-import android.content.res.AssetFileDescriptor;
-import android.content.res.AssetManager;
 import android.graphics.Bitmap;
-import android.os.SystemClock;
 import android.support.v4.util.Pair;
-import android.util.Log;
 
 import org.opencv.android.Utils;
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
-import org.opencv.core.MatOfDouble;
 import org.opencv.core.MatOfFloat;
-import org.opencv.core.Scalar;
 import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
-import org.tensorflow.lite.Interpreter;
+import org.tensorflow.contrib.android.TensorFlowInferenceInterface;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -28,27 +22,25 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.nio.MappedByteBuffer;
-import java.nio.channels.FileChannel;
 import java.util.HashMap;
 import java.util.List;
 
 
 public class Facenet extends FaceRecognizer {
-    private Interpreter tflite;
+    private TensorFlowInferenceInterface inferenceInterface;
+    // Config values.
+    private String inputLayer = "input";
+    private String outputLayer = "embeddings";
 
-    private int batchSize = 1;
     private int inputSize = 160;
     private int channels  = 3;
+    private int imageMean = 128;
+    private int imageStd  = 128;
     private int outputSize = 128;
 
-    private int[] intValues;
-    private ByteBuffer imgData = null;
+    private boolean logStats = true;
     private HashMap<String,Mat> mUserData = new HashMap<>();
-    private HashMap<String,Integer> mMapCounter = new HashMap<>();
-    private double mThreshold = 0.0;
+    private double mThreshold = 1.1;
     public transient Context currentContext = null;
     /**
      * Initializes a native TensorFlow session for extracting Facenet features
@@ -61,15 +53,7 @@ public class Facenet extends FaceRecognizer {
     {
         try{
             currentContext = context;
-            AssetManager assetManager = context.getAssets();
-            long startTime = SystemClock.uptimeMillis();
-            tflite = new Interpreter(loadModelFile(assetManager, modelFilename));
-            imgData =
-                    ByteBuffer.allocateDirect(4*
-                            batchSize * inputSize * inputSize * channels);
-            imgData.order(ByteOrder.nativeOrder());
-            intValues = new int[inputSize * inputSize];
-//            clear();
+            inferenceInterface = new TensorFlowInferenceInterface(context.getAssets(), modelFilename);
             load();
         }
         catch(Exception e)
@@ -77,16 +61,6 @@ public class Facenet extends FaceRecognizer {
             e.printStackTrace();
         }
     }
-
-    private MappedByteBuffer loadModelFile(AssetManager assetManager, String modelPath) throws IOException {
-        AssetFileDescriptor fileDescriptor = assetManager.openFd(modelPath);
-        FileInputStream inputStream = new FileInputStream(fileDescriptor.getFileDescriptor());
-        FileChannel fileChannel = inputStream.getChannel();
-        long startOffset = fileDescriptor.getStartOffset();
-        long declaredLength = fileDescriptor.getDeclaredLength();
-        return fileChannel.map(FileChannel.MapMode.READ_ONLY, startOffset, declaredLength);
-    }
-
 
     /**
      * Initializes a native TensorFlow session for extracting Facenet features
@@ -102,112 +76,51 @@ public class Facenet extends FaceRecognizer {
 
 
     public float[] getFeatureVector(Mat img){
+
         Imgproc.resize(img, img, new Size(inputSize, inputSize));
-        convertToByteBuffer(img);
-        float[][] outputs_ = new float[1][outputSize];
-        tflite.run(imgData,outputs_);
-        return outputs_[0];
+
+        inferenceInterface.feed(inputLayer, getPixels(img), 1, inputSize, inputSize, channels);
+        String phase_train = "phase_train";
+        inferenceInterface.feed(phase_train,new boolean[]{false});
+        inferenceInterface.run(new String[]{outputLayer}, logStats);
+        float[] outputs = new float[outputSize];
+        inferenceInterface.fetch(outputLayer, outputs);
+
+        return outputs;
     }
 
-    private void convertToByteBuffer(Mat img)
-    {
-        long startTime = SystemClock.uptimeMillis();
+    public double getSimilarity(List<Float> a,List<Float> b ){
 
-        if (imgData == null) {
-            return;
-        }
-        imgData.rewind();
-        Bitmap bitmap = Bitmap.createBitmap(inputSize, inputSize, Bitmap.Config.ARGB_8888);
-        Utils.matToBitmap(img, bitmap);
-        bitmap.getPixels(intValues, 0, bitmap.getWidth(), 0, 0, bitmap.getWidth(), bitmap.getHeight());
-        // Convert the image to floating point.
-        int pixel = 0;
+        double dist = 0.0;
 
-        //Pre-whiten Image
-        MatOfDouble meanMat = new MatOfDouble();
-        MatOfDouble stdMat = new MatOfDouble();
-        Core.meanStdDev(img, meanMat, stdMat);
-        double[] means = meanMat.get(0, 0);
-        double[] stds = stdMat.get(0, 0);
-        float mean = (float)means[0];
-        float std = (float)stds[0];
-
-        for (int i = 0; i < inputSize; ++i) {
-            for (int j = 0; j < inputSize; ++j) {
-                final int val = intValues[pixel++];
-                imgData.putFloat((byte)  (((float)((val >> 16) & 0xFF)) - mean) / std);
-                imgData.putFloat((byte) (((float)((val >> 8) & 0xFF)) - mean) / std);
-                imgData.putFloat((byte) (((float)(val & 0xFF)) - mean) / std);
+        if(a!=null && b!=null && a.size()==b.size()){
+            for(int i = 0; i< a.size(); i++)
+            {
+                dist += Math.pow(a.get(i)-b.get(i),2);
             }
+           return 1 - Math.sqrt(dist);
         }
-
-        long endTime = SystemClock.uptimeMillis();
-        Log.d("DEBUG", "Convert to byte buffer: " + Long.toString(endTime - startTime));
+        return -1.0;
     }
 
-
-    private float[][][][] convertToFloat4D(Mat img){
-
-        long startTime = SystemClock.uptimeMillis();
+    private float[] getPixels(Mat img){
         Bitmap bmp = Bitmap.createBitmap(inputSize, inputSize, Bitmap.Config.ARGB_8888);
         Utils.matToBitmap(img, bmp);
+        int[] intValues = new int[inputSize * inputSize];
         bmp.getPixels(intValues, 0, inputSize, 0, 0, inputSize, inputSize);
-
-        //Pre-whiten Image
-        MatOfDouble meanMat = new MatOfDouble();
-        MatOfDouble stdMat = new MatOfDouble();
-        Core.meanStdDev(img, meanMat, stdMat);
-        double[] means = meanMat.get(0, 0);
-        double[] stds = stdMat.get(0, 0);
-        float mean = (float)means[0];
-        float std = (float)stds[0];
-
-        float[][][][] floatValues = new float[1][inputSize][inputSize][channels];
-        int pixel = 0;
-        for (int i = 0; i < inputSize; ++i) {
-            for (int j = 0; j < inputSize; ++j) {
-                final int val = intValues[pixel++];
-                floatValues[0][i][j][0] = (((float) ((val >> 16) & 0xFF)) - mean) / std;
-                floatValues[0][i][j][1] = (((float) ((val >> 8) & 0xFF)) - mean) / std;
-                floatValues[0][i][j][2] = (((float) (val & 0xFF)) - mean) / std;
-            }
-        }
-        long endTime = SystemClock.uptimeMillis();
-        Log.d("DEBUG", "Convert to float 4D array: " + Long.toString(endTime - startTime));
-        return floatValues;
-    }
-
-    private float[] convertToFloat(Mat img){
-
-        long startTime = SystemClock.uptimeMillis();
-        Bitmap bmp = Bitmap.createBitmap(inputSize, inputSize, Bitmap.Config.ARGB_8888);
-        Utils.matToBitmap(img, bmp);
-        bmp.getPixels(intValues, 0, inputSize, 0, 0, inputSize, inputSize);
-
-        //Pre-whiten Image
-        MatOfDouble meanMat = new MatOfDouble();
-        MatOfDouble stdMat = new MatOfDouble();
-        Core.meanStdDev(img, meanMat, stdMat);
-        double[] means = meanMat.get(0, 0);
-        double[] stds = stdMat.get(0, 0);
-        float mean = (float)means[0];
-        float std = (float)stds[0];
 
         float[] floatValues = new float[inputSize * inputSize * channels];
         for (int i = 0; i < intValues.length; ++i) {
             final int val = intValues[i];
-            floatValues[i * 3 + 0] = (((float)((val >> 16) & 0xFF)) - mean) / std;
-            floatValues[i * 3 + 1] = (((float)((val >> 8) & 0xFF)) - mean) / std;
-            floatValues[i * 3 + 2] = (((float)(val & 0xFF)) - mean) / std;
+            floatValues[i * 3 + 0] = (((float)((val >> 16) & 0xFF)) - imageMean) / imageStd;
+            floatValues[i * 3 + 1] = (((float)((val >> 8) & 0xFF)) - imageMean) / imageStd;
+            floatValues[i * 3 + 2] = (((float)(val & 0xFF)) - imageMean) / imageStd;
         }
-        long endTime = SystemClock.uptimeMillis();
-        Log.d("DEBUG", "Convert to float array: " + Long.toString(endTime - startTime));
         return floatValues;
     }
-
     public void load(){
         try {
-            File yourFile = new File(currentContext.getFilesDir().getPath().toString() + "/user.feat");
+            File yourFile = new File(currentContext.getFilesDir().getPath().toString() + "/user.db");
             FileInputStream fileInputStream = new FileInputStream(yourFile);
             ObjectInputStream objectInputStream = new ObjectInputStream(fileInputStream);
 
@@ -221,17 +134,6 @@ public class Facenet extends FaceRecognizer {
                 mUserData.put(key,m);
             }
             objectInputStream.close();
-
-            yourFile = new File(currentContext.getFilesDir().getPath().toString() + "user.count");
-            fileInputStream = new FileInputStream(yourFile);
-            objectInputStream = new ObjectInputStream(fileInputStream);
-
-            HashMap<String,Integer> s = (HashMap<String,Integer>) objectInputStream.readObject();
-            for(String key:s.keySet())
-            {
-                mMapCounter.put(key,s.get(key));
-            }
-            objectInputStream.close();
         }
         catch (Exception e)
         {
@@ -240,7 +142,7 @@ public class Facenet extends FaceRecognizer {
     }
     public void save(){
         try {
-            File yourFile = new File(currentContext.getFilesDir().getPath().toString() + "/user.feat");
+            File yourFile = new File(currentContext.getFilesDir().getPath().toString() + "/user.db");
             yourFile.createNewFile(); // if file already exists will do nothing
             FileOutputStream fileOutputStream = new FileOutputStream(yourFile);
             ObjectOutputStream objectOutputStream = new ObjectOutputStream(fileOutputStream);
@@ -254,37 +156,6 @@ public class Facenet extends FaceRecognizer {
 
             objectOutputStream.writeObject(convertedUserData);
             objectOutputStream.close();
-
-            yourFile = new File(currentContext.getFilesDir().getPath().toString() + "user.count");
-            fileOutputStream = new FileOutputStream(yourFile);
-            objectOutputStream = new ObjectOutputStream(fileOutputStream);
-
-            HashMap<String,Integer> convertedUserMap = new HashMap<>();
-            for(String key:mMapCounter.keySet())
-            {
-                convertedUserMap.put(key,mMapCounter.get(key));
-            }
-            objectOutputStream.writeObject(convertedUserMap);
-            objectOutputStream.close();
-        }
-        catch (Exception e)
-        {
-            e.printStackTrace();
-        }
-    }
-
-    public void clear(){
-        try {
-            File yourFile = new File(currentContext.getFilesDir().getPath().toString() + "/user.feat");
-            yourFile.createNewFile(); // if file already exists will do nothing
-            yourFile.delete();
-            yourFile = new File(currentContext.getFilesDir().getPath().toString() + "/user.count");
-            yourFile.createNewFile(); // if file already exists will do nothing
-            yourFile.delete();
-            yourFile = new File(currentContext.getFilesDir().getPath().toString() + "/user.db");
-            yourFile.createNewFile(); // if file already exists will do nothing
-            yourFile.delete();
-
         }
         catch (Exception e)
         {
@@ -293,37 +164,30 @@ public class Facenet extends FaceRecognizer {
     }
 
     public boolean train(List<Pair<Mat,String>> trainingSet) {
-        for (int i=0; i< trainingSet.size(); i++)
-        {
-            Mat face = trainingSet.get(i).first;
-            String name = trainingSet.get(i).second;
+        for (Pair<Mat, String> element : trainingSet) {
             MatOfFloat res = new MatOfFloat();
-            res.fromArray(getFeatureVector(face));
+            res.fromArray(getFeatureVector(element.first));
             Mat resMat = new Mat();
             res.copyTo(resMat);
             Core.normalize(resMat,resMat);
-            if(!mUserData.containsKey(name))
+            if(!mUserData.containsKey(element.second))
             {
-                mUserData.put(name,resMat);
-                mMapCounter.put(name,1);
+                mUserData.put(element.second,resMat);
             }
-            else {
-                Mat temp = mUserData.get(name);
-                mMapCounter.put(name,mMapCounter.get(name)+1);
-                Core.add(temp, resMat, temp);
-            }
+//            else {
+//                Mat temp = mUserMap.get(element.second);
+//                mMapCounter.put(element.second,mMapCounter.get(element.second)+1);
+//                Core.add(temp, resMat, temp);
+//            }
         }
-
+//        for(String key:mUserMap.keySet())
+//        {
+//            Mat temp = mUserMap.get(key);
+//            Scalar val = new Scalar(1/mMapCounter.get(key).doubleValue(),1,1,1);
+//            Core.multiply(temp,val,temp);
+//        }
         save();
         return true;
-    }
-
-    public double cosine_distance(Mat feature_a, Mat feature_b)
-    {
-        double ab = feature_a.dot(feature_b);
-        double aa = feature_a.dot(feature_a);
-        double bb = feature_b.dot(feature_b);
-        return ab / Math.sqrt(aa*bb);
     }
 
     public String predict(Mat img){
@@ -335,18 +199,12 @@ public class Facenet extends FaceRecognizer {
             res.fromArray(getFeatureVector(img));
             Mat resMat = new Mat();
             res.copyTo(resMat);
-            Core.normalize(resMat,resMat);
-
-            double max = 0;
-
+            double min = Math.sqrt(128);
             for (String key : mUserData.keySet()) {
-                Mat userFeat = mUserData.get(key);
-                Core.divide(userFeat, new Scalar(mMapCounter.get(key)),userFeat);
-
-                double dist = cosine_distance(res, userFeat);
-                if (dist > mThreshold && dist > max) {
-                    max = dist;
-                    result= key;
+                double dist = Core.norm(res, mUserData.get(key), Core.NORM_L2);
+                if ( dist < min) {
+                    min = dist;
+                    result = key;
                 }
             }
         }

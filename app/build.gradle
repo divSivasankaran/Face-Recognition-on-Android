@@ -13,9 +13,8 @@ android {
         multiDexEnabled true
         externalNativeBuild {
             cmake {
-                arguments '-DANDROID_ARM_NEON=TRUE'
-                cppFlags "-frtti -fexceptions"
-                abiFilters 'x86_64', 'armeabi', 'armeabi-v7a', 'mips', 'arm64-v8a'
+                cppFlags ""
+                abiFilters 'x86', 'armeabi', 'armeabi-v7a', 'mips'
             }
         }
     }
@@ -37,10 +36,6 @@ android {
             java.srcDirs = ['src/main/java', 'src/main/util', 'src/main/java/conex/facerecognition/activities']
         }
     }
-    aaptOptions {
-        noCompress "tflite"
-        noCompress "lite"
-    }
 }
 
 dependencies {
@@ -51,9 +46,9 @@ dependencies {
     compile 'com.android.support:appcompat-v7:27.1.0'
     compile 'com.android.support.constraint:constraint-layout:1.0.2'
     compile 'com.android.support:design:27.1.0'
-    compile project(':openCVLibrary340dev')
+    compile project(':openCV')
     implementation 'junit:junit:4.12'
-    implementation 'org.tensorflow:tensorflow-lite:+'
+    compile 'org.tensorflow:tensorflow-android:+'
     implementation 'android.arch.persistence.room:runtime:1.0.0'
     annotationProcessor 'android.arch.persistence.room:compiler:1.0.0'
 }
