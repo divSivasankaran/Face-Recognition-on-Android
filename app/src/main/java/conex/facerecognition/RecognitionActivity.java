@@ -330,8 +330,10 @@ public class RecognitionActivity extends AppCompatActivity  implements CvCameraV
             }
             if(!mTrainingInProgress && !mEnrollUser && (mEnrollDialog==null || !mEnrollDialog.isShowing()))
             {
-                GlobalClass global = (GlobalClass) getApplication();
-                String id = global.getFaceRecognizer().predict(ImageUtil.getCroppedFace(mRgba, facesArray[i]));
+                String id = "Unknown";
+                FaceRecognizer fr = getFaceRecognizer();
+                if(fr!=null)
+                    id =  fr.predict(ImageUtil.getCroppedFace(mRgba, facesArray[i]));
                 Point loc = facesArray[i].tl().clone();
                 loc.y = loc.y - 5;
                 setLabel(mRgba, id, loc);
@@ -365,8 +367,9 @@ public class RecognitionActivity extends AppCompatActivity  implements CvCameraV
     {
         mTrainingSet.addAll(mTrain);
         mTrainingInProgress = true;
-        GlobalClass global = (GlobalClass)getApplication();
-        global.getFaceRecognizer().update(mTrainingSet);
+        FaceRecognizer fr = getFaceRecognizer();
+        if(fr!=null)
+            fr.update(mTrainingSet);
         mTrainingInProgress = false;
         mEnrollUser = false;
     }
@@ -376,6 +379,30 @@ public class RecognitionActivity extends AppCompatActivity  implements CvCameraV
         mOpenCvCameraView.disableView();
         mOpenCvCameraView.setCameraIndex(mCameraId);
         mOpenCvCameraView.enableView();
+    }
+
+    private FaceRecognizer getFaceRecognizer(){
+        GlobalClass global = (GlobalClass)getApplication();
+        FaceRecognizer fr = global.getFaceRecognizer();
+        if(fr == null)
+        {
+            AlertDialog.Builder dlgAlert  = new AlertDialog.Builder(this);
+
+            dlgAlert.setMessage("Please verify if you have downlaoded all the necessary files for facenet and opencv.");
+            dlgAlert.setTitle("Missing model files");
+            dlgAlert.setPositiveButton("OK", null);
+            dlgAlert.setCancelable(true);
+            dlgAlert.create().show();
+
+            dlgAlert.setPositiveButton("Ok",
+                    new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int which) {
+
+                        }
+                    });
+            return null;
+        }
+        return fr;
     }
 
 }
