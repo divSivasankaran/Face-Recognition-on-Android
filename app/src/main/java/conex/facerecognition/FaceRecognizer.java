@@ -11,16 +11,14 @@ import java.util.List;
 
 public abstract class FaceRecognizer {
 
-    public boolean setModelFile(String filename)
+    public void setModelFile(String filename)
     {
         mModelFile = filename;
         File f = new File(mModelFile);
         if(f.exists())
         {
             load();
-            return true;
         }
-        return false;
     }
     public void clearModelfile(String filename)
     {
