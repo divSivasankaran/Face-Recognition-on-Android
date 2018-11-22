@@ -58,7 +58,10 @@ Verify if these files exist in the project. If not, follow the instructions belo
 
 * OpenCV Face Tracker requires the cascade files, which are already part of this repository. If you want to test with their other defaults, you can find them [here](https://github.com/opencv/opencv/tree/master/data).
 
-*Note:* The facenet model is not currently optimized for mobile and so the performance is less than ideal right now. I'm working on moving to Tensorflow Lite & will publish a new model soon!
+* Facenet on tensorflow-lite - get the converted model [here](https://drive.google.com/file/d/1ClJkipPrEY2sbVc_j2eZrXvokKBh3oHj/view)
+* The notebook used to convert the model [here](https://colab.research.google.com/drive/1JwDUAPYdR_jL2-YQeqpaCO3d0XN2Ar84)
+
+*Note:* The updated version of the app using tflite is a WIP. 
 
 #### Contact
 If you are trying to adapt it for your own use case/facing issues with deploying or wish to share your comments/feedback, reach me at <div1090@gmail.com>
